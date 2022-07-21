@@ -20,7 +20,7 @@ clients = []
 socketio = SocketIO(app)
 
 config_file = '../python.config'  # kafka config file
-number_of_workers = 3
+number_of_workers = 2
 topic_to_send = 'send_receive_time_series'
 topic_to_receive = 'monitor'
 
@@ -50,19 +50,22 @@ monitor_thread.start()
 
 @socketio.on('message')
 def message(data):
-	user_code = data["user_code"]
-	time_series = data["time_series"]
-	traditional_alg = data["traditional_alg"]
-	work_order = balanceamento(len(time_series), number_of_workers)
+    user_code = data["user_code"]
+    time_series = data["time_series"]
+    converter_alg = data["converter_alg"]
+    comparator_alg = data["comparator_alg"]
+    
+    work_order = balanceamento(len(time_series), number_of_workers)
 
-	validade_time_series = TimeSeriesSchema().load(
-		{'user_code': user_code, 'time_series': time_series, 'work_order': work_order, 'traditional_alg': traditional_alg})
+    validade_time_series = TimeSeriesSchema().load(
+		{'user_code': user_code, 'time_series': time_series, 'work_order': work_order, 
+        'converter_alg': converter_alg, 'comparator_alg': comparator_alg, 'len_time_series': len(time_series)})
 
-	clients_hashmap[user_code] = request.sid
-	limiter_connection[user_code] = 0
+    clients_hashmap[user_code] = request.sid
+    limiter_connection[user_code] = 0
 
-	prod(producer, topic_to_send, 0, validade_time_series, user_code)
-	producer.flush()
+    prod(producer, topic_to_send, 0, validade_time_series, user_code)
+    producer.flush()
 
 if __name__ == '__main__':
     socketio.run(app, port=5000, debug=True)
