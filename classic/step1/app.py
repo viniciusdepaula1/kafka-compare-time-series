@@ -20,7 +20,7 @@ clients = []
 socketio = SocketIO(app)
 
 config_file = '../python.config'  # kafka config file
-number_of_workers = 3
+number_of_workers = 2
 topic_to_send = 'send_receive_time_series'
 topic_to_receive = 'monitor'
 

@@ -39,7 +39,7 @@ test2 = {
     'traditional_alg': 3,
 }
 
-sio.emit('message', test1)
+sio.emit('message', test2)
 
 @sio.on('response')
 def response(data):

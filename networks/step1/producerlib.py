@@ -24,31 +24,38 @@ def prod(producer, topic, partition, value, user_code):
 
 
 def balanceamento(num_series, num_maquinas):
-    s = np.linspace(1, num_series, num_series)
-    #print(s)
-    #print(len(s))
-    results = []
+    lista_series = list(np.linspace(1, num_series, num_series))
+    n_maq = num_maquinas
+    print(lista_series)
+    
+    maqs = np.empty((n_maq, 0)).tolist()
+    print(maqs)
 
-    num_series_por_maquina = math.ceil(num_series / num_maquinas)
-    #print(num_series_por_maquina)
+    cont_maquina = 0
+    reverso = False
+    while(len(lista_series) > 0):
 
-    for m in range(num_maquinas):
-        deletar_do_inicio = True
-        series = []
-        for i in range(num_series_por_maquina):
-            if(len(s) > 0):
-                if(deletar_do_inicio):
-                    series.append(s[0])
-                    s = np.delete(s, 0)
-                else:
-                    series.append(s[-1])
-                    s = np.delete(s, -1)
-                deletar_do_inicio = not deletar_do_inicio
-        #print('máquina ', m+1, ': ', series)
-        results.append(series)
+        #print('mq' + str(cont_maquina) + ' = ', str(lista_series.pop(0)))
+        maqs[cont_maquina].append(lista_series.pop(0))
 
-    return results
+        if(reverso):
+            if(cont_maquina == 0 and len(lista_series) > 0):
+                #print('mq' + str(cont_maquina) + ' = ', str(lista_series.pop(0)))
+                maqs[cont_maquina].append(lista_series.pop(0))
+                reverso = not reverso
+                cont_maquina += 1
+            else:
+                cont_maquina -= 1
+        else:
+            if(cont_maquina == n_maq-1 and len(lista_series) > 0):
+                #print('mq' + str(cont_maquina) + ' = ', str(lista_series.pop(0)))
+                maqs[cont_maquina].append(lista_series.pop(0))
+                reverso = not reverso
+                cont_maquina -= 1
+            else:
+                cont_maquina += 1
 
+    return maqs
 
 def consumer_fun(consumer, user_event, queue):
     print('listening')

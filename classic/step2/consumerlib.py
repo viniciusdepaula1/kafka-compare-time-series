@@ -1,12 +1,10 @@
-from confluent_kafka import Producer, Consumer, KafkaException
+from confluent_kafka import KafkaException
 import json
 import numpy as np
-import math
 from classic_algs import calcDtwAlignment, calcMi, calcPearson
-from model import TimeSeries, TimeSeriesSchema, monitorSchema
+from model import TimeSeriesSchema, monitorSchema
 from threading import Thread
 from producerlib import *
-from marshmallow import exceptions
 
 def consumer_fun(consumer, producer, my_position):
     try:

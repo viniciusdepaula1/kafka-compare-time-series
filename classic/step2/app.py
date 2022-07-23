@@ -1,15 +1,8 @@
 import sys
-from flask import Flask, jsonify, request
-from confluent_kafka import Producer, Consumer, TopicPartition
-from model import TimeSeries, TimeSeriesSchema
-import json
-import uuid
 import ccloud_lib
+from confluent_kafka import Producer, Consumer, TopicPartition
 from consumerlib import *
-import numpy as np
-import math
-from queue import Queue, Empty
-from threading import Thread, Event
+from threading import Thread
 
 #app = Flask(__name__)
 config_file = '../python.config'  # kafka config file

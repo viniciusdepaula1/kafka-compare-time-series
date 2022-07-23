@@ -24,30 +24,38 @@ def prod(producer, topic, partition, value, user_code):
 
 
 def balanceamento(num_series, num_maquinas):
-    s = np.linspace(1, num_series, num_series)
-    #print(s)
-    #print(len(s))
-    results = []
+    lista_series = list(np.linspace(1, num_series, num_series))
+    n_maq = num_maquinas
+    print(lista_series)
+    
+    maqs = np.empty((n_maq, 0)).tolist()
+    print(maqs)
 
-    num_series_por_maquina = math.ceil(num_series / num_maquinas)
-    #print(num_series_por_maquina)
+    cont_maquina = 0
+    reverso = False
+    while(len(lista_series) > 0):
 
-    for m in range(num_maquinas):
-        deletar_do_inicio = True
-        series = []
-        for i in range(num_series_por_maquina):
-            if(len(s) > 0):
-                if(deletar_do_inicio):
-                    series.append(s[0])
-                    s = np.delete(s, 0)
-                else:
-                    series.append(s[-1])
-                    s = np.delete(s, -1)
-                deletar_do_inicio = not deletar_do_inicio
-        #print('máquina ', m+1, ': ', series)
-        results.append(series)
+        #print('mq' + str(cont_maquina) + ' = ', str(lista_series.pop(0)))
+        maqs[cont_maquina].append(lista_series.pop(0))
 
-    return results
+        if(reverso):
+            if(cont_maquina == 0 and len(lista_series) > 0):
+                #print('mq' + str(cont_maquina) + ' = ', str(lista_series.pop(0)))
+                maqs[cont_maquina].append(lista_series.pop(0))
+                reverso = not reverso
+                cont_maquina += 1
+            else:
+                cont_maquina -= 1
+        else:
+            if(cont_maquina == n_maq-1 and len(lista_series) > 0):
+                #print('mq' + str(cont_maquina) + ' = ', str(lista_series.pop(0)))
+                maqs[cont_maquina].append(lista_series.pop(0))
+                reverso = not reverso
+                cont_maquina -= 1
+            else:
+                cont_maquina += 1
+
+    return maqs
 
 
 def consumer_fun(consumer, user_event, queue):
@@ -62,15 +70,8 @@ def consumer_fun(consumer, user_event, queue):
             else:
                 record_value = msg.value()
                 json_value = json.loads(record_value)
-                #user_code = json_value['user_code']
-                #results = json_value['results']
-
-                #print(results)
-                #print(user_code)
 
                 queue.put(json_value)
-
-                print('lancei')
                 
                 user_event.set()
 
@@ -93,16 +94,8 @@ def user_wait_result(queue, user_event, clients_hashmap, limiter_connection, num
             except Empty:
                 print("Queue 'out_q' is empty")
             else:
-                print('to no while true')
                 user_code = comparation_results['user_code']
                 results = comparation_results['results']
-
-                print('é o results')
-                print(results)      
-                print('é o usercode')   
-                print(clients_hashmap[user_code])
-                print('é o limiter_connection')
-                print(limiter_connection[user_code])
 
                 flask_socketio.emit('message', 
                     {'results': results, 'sid': clients_hashmap[user_code]}, 
