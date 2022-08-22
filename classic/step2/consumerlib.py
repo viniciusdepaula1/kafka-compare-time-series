@@ -6,7 +6,7 @@ from model import TimeSeriesSchema, monitorSchema
 from threading import Thread
 from producerlib import *
 
-def consumer_fun(consumer, producer, my_position):
+def consumer_fun(consumer, producer, my_position, clients_hashmap):
     try:
         while True:
             msg = consumer.poll(0.1)
@@ -17,19 +17,40 @@ def consumer_fun(consumer, producer, my_position):
             else:
                 record_value = msg.value()
                 json_value = json.loads(record_value)
-                print(json_value)
 
                 user_code = json_value['user_code']
                 time_series = json_value['time_series']
                 work_order = json_value['work_order']
                 traditional_alg = json_value['traditional_alg']
+                len_time_series = json_value["len_time_series"]
+                position = json_value["position"]
 
                 validade_time_series = TimeSeriesSchema().load(
-		            {'user_code': user_code, 'time_series': time_series, 'work_order': work_order, 'traditional_alg': traditional_alg})
+		            {'user_code': user_code, 'time_series': time_series, 'work_order': work_order, 
+                        'traditional_alg': traditional_alg, 'len_time_series': len_time_series, 'position': position})
                 
-                consume_series = Thread(target=exec_work, args=(validade_time_series, producer, my_position))
-                consume_series.start()
+                if(user_code in clients_hashmap):
+                    clients_hashmap[user_code][position] = time_series
+                    if(len(clients_hashmap[user_code]) == 40):
+                        vector_final = []
+                        for i in range(1, 41):
+                            vector_final.extend(clients_hashmap[user_code][i])
+                        
+                        validade_time_series = TimeSeriesSchema().load(
+		                    {'user_code': user_code, 'time_series': vector_final, 'work_order': work_order, 
+                            'traditional_alg': traditional_alg, 'len_time_series': len_time_series, 'position': position})
 
+                        consume_series = Thread(target=exec_work, args=(validade_time_series, producer, my_position))
+                        consume_series.start()
+                else:
+                    if(len(time_series) == len_time_series):
+                        print('chegay')
+                        consume_series = Thread(target=exec_work, args=(validade_time_series, producer, my_position))
+                        consume_series.start()
+                    else:
+                        clients_hashmap[user_code] = {}
+                        clients_hashmap[user_code][position] = time_series
+            
     except KeyboardInterrupt:
         print("Detected Keyboard Interrupt. Cancelling.")
         pass
@@ -68,9 +89,14 @@ def exec_work(data, producer, my_position):
     for n in thread_list:
         n.join()
 
-    json_obj = { 'user_code': user_code, 'results': aux_results}
+    splits = np.array_split(aux_results, 80)
+    print("From splits \n\n\n\n")
+    #print(splits)
+    for x in splits:
+        json_array = x.tolist()
+        json_obj = { 'user_code': user_code, 'results': json_array}
+        prod(producer, 'monitor', 0, json_obj, user_code)
 
-    prod(producer, 'monitor', 0, json_obj, user_code)
     producer.flush()
 
 def calc_alg(x, y, n, m, alg, list):

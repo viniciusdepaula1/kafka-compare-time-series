@@ -17,7 +17,7 @@ def acked(err, msg):
 def prod(producer, topic, partition, value, user_code):
     record_key = user_code
     record_value = json.dumps(value)
-    print("Producing record: {}\t{}".format(record_key, record_value))
+    print("Producing record: {}".format(record_key))
     producer.produce(topic, key=record_key, value=record_value,
                      on_delivery=acked, partition=partition)
     producer.poll(0)
@@ -26,10 +26,10 @@ def prod(producer, topic, partition, value, user_code):
 def balanceamento(num_series, num_maquinas):
     lista_series = list(np.linspace(1, num_series, num_series))
     n_maq = num_maquinas
-    print(lista_series)
+    #print(lista_series)
     
     maqs = np.empty((n_maq, 0)).tolist()
-    print(maqs)
+    #print(maqs)
 
     cont_maquina = 0
     reverso = False
@@ -97,11 +97,16 @@ def user_wait_result(queue, user_event, clients_hashmap, limiter_connection, num
                 user_code = comparation_results['user_code']
                 results = comparation_results['results']
 
-                flask_socketio.emit('message', 
-                    {'results': results, 'sid': clients_hashmap[user_code]}, 
-                    room=clients_hashmap[user_code])
+                if(user_code in clients_hashmap):
+                    print('sending to client')
+                    flask_socketio.emit('message', 
+                        {'results': results, 'sid': clients_hashmap[user_code]}, 
+                        room=clients_hashmap[user_code])
 
-                limiter_connection[user_code] += 1
-                if(limiter_connection[user_code] == number_of_workers):
-                    flask_socketio.emit('disconnect', room=clients_hashmap[user_code])
+                    limiter_connection[user_code] += 1
+                    if(limiter_connection[user_code] >= 160):
+                        print('closing connection')
+                        flask_socketio.emit('disconnect', room=clients_hashmap[user_code])
+                else:
+                    print('user not in database')
             

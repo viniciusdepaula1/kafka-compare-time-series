@@ -9,7 +9,7 @@ from threading import Thread
 from producerlib import *
 from marshmallow import exceptions
 
-def consumer_fun(consumer, producer, networks_hashmap, my_position):
+def consumer_fun(consumer, producer, networks_hashmap, my_position, clients_hashmap):
     try:
         while True:
             msg = consumer.poll(0.1)

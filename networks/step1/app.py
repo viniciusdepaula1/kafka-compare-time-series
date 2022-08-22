@@ -17,7 +17,7 @@ async_mode = None
 
 clients = []
 
-socketio = SocketIO(app)
+socketio = SocketIO(app, async_mode="threading")
 
 config_file = '../python.config'  # kafka config file
 number_of_workers = 2
@@ -39,6 +39,7 @@ consumer.subscribe([topic_to_receive])
 
 clients_hashmap = {}
 limiter_connection = {}
+
 user_event = Event()
 q = Queue()
 
@@ -54,12 +55,15 @@ def message(data):
     time_series = data["time_series"]
     converter_alg = data["converter_alg"]
     comparator_alg = data["comparator_alg"]
-    
-    work_order = balanceamento(len(time_series), number_of_workers)
+    len_time_series = data["len_time_series"]
+    position = data["position"]
+
+    work_order = balanceamento(len_time_series, number_of_workers)
 
     validade_time_series = TimeSeriesSchema().load(
 		{'user_code': user_code, 'time_series': time_series, 'work_order': work_order, 
-        'converter_alg': converter_alg, 'comparator_alg': comparator_alg, 'len_time_series': len(time_series)})
+        'converter_alg': converter_alg, 'comparator_alg': comparator_alg, 'len_time_series': len_time_series,
+        'position': position})
 
     clients_hashmap[user_code] = request.sid
     limiter_connection[user_code] = 0

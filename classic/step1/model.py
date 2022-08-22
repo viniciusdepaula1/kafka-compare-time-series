@@ -14,6 +14,8 @@ class TimeSeriesSchema(Schema):
     traditional_alg = fields.Int(required=True)
     time_series = fields.List(fields.List(fields.Float, required=True), required=True)
     work_order = fields.List(fields.List(fields.Float, required=True), required=True)
+    len_time_series = fields.Int(required=True)
+    position = fields.Int(required=True) 
 
 class monitorSchema(Schema):
     line = fields.Int(required=True)

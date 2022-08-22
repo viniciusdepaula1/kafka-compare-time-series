@@ -2,6 +2,7 @@ from ast import arg
 from queue import Queue, Empty
 from socket import socket
 from threading import Thread, Event
+from turtle import position
 from flask import Flask, jsonify, request
 from confluent_kafka import Producer, Consumer
 from numpy import matrix
@@ -39,6 +40,7 @@ consumer.subscribe([topic_to_receive])
 
 clients_hashmap = {}
 limiter_connection = {}
+
 user_event = Event()
 q = Queue()
 
@@ -50,13 +52,18 @@ monitor_thread.start()
 
 @socketio.on('message')
 def message(data):
+	print('chegou')
 	user_code = data["user_code"]
 	time_series = data["time_series"]
+	len_time_series = data["len_time_series"]
 	traditional_alg = data["traditional_alg"]
-	work_order = balanceamento(len(time_series), number_of_workers)
+	position = data["position"]
+
+	work_order = balanceamento(len_time_series, number_of_workers)
 
 	validade_time_series = TimeSeriesSchema().load(
-		{'user_code': user_code, 'time_series': time_series, 'work_order': work_order, 'traditional_alg': traditional_alg})
+		{'user_code': user_code, 'time_series': time_series, 'work_order': work_order, 
+			'traditional_alg': traditional_alg, 'len_time_series': len_time_series, 'position': position})
 
 	clients_hashmap[user_code] = request.sid
 	limiter_connection[user_code] = 0

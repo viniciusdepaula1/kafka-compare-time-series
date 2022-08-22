@@ -12,6 +12,8 @@ print('position: ', my_position)
 topic_to_send = 'monitor'
 topic_to_receive = 'send_receive_time_series'
 
+clients_hashmap = {}
+
 #producer instance
 conf = ccloud_lib.read_ccloud_config(config_file)
 producer_conf = ccloud_lib.pop_schema_registry_params_from_config(conf)
@@ -25,7 +27,7 @@ consumer_conf['auto.offset.reset'] = 'earliest'
 consumer = Consumer(consumer_conf)
 consumer.assign([TopicPartition(topic_to_receive, 0)])
 
-wait_work = Thread(target=consumer_fun, args=(consumer, producer, my_position))
+wait_work = Thread(target=consumer_fun, args=(consumer, producer, my_position, clients_hashmap))
 wait_work.start()
 
 

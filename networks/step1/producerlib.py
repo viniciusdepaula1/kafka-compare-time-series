@@ -100,22 +100,19 @@ def user_wait_result(queue, user_event, clients_hashmap, limiter_connection, num
             except Empty:
                 print("Queue 'out_q' is empty")
             else:
-                print('to no while true')
                 user_code = comparation_results['user_code']
                 results = comparation_results['results']
 
-                print('é o results')
-                print(results)      
-                print('é o usercode')   
-                print(clients_hashmap[user_code])
-                print('é o limiter_connection')
-                print(limiter_connection[user_code])
+                if(user_code in clients_hashmap):
+                    print('sending message')
+                    flask_socketio.emit('message', 
+                        {'results': results, 'sid': clients_hashmap[user_code]}, 
+                        room=clients_hashmap[user_code])
 
-                flask_socketio.emit('message', 
-                    {'results': results, 'sid': clients_hashmap[user_code]}, 
-                    room=clients_hashmap[user_code])
-
-                limiter_connection[user_code] += 1
-                if(limiter_connection[user_code] == number_of_workers):
-                    flask_socketio.emit('disconnect', room=clients_hashmap[user_code])
+                    limiter_connection[user_code] += 1
+                    if(limiter_connection[user_code] >= 20):
+                        print('closing connection')
+                        flask_socketio.emit('disconnect', room=clients_hashmap[user_code])
+                else:
+                    print('user not in database')
             

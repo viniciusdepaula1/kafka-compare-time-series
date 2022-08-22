@@ -8,7 +8,7 @@ from threading import Thread
 from producerlib import *
 from marshmallow import exceptions
 
-def consumer_fun(consumer, producer, my_position):
+def consumer_fun(consumer, producer, my_position, clients_hashmap):
     try:
         while True:
             msg = consumer.poll(0.1)
@@ -19,7 +19,6 @@ def consumer_fun(consumer, producer, my_position):
             else:
                 record_value = msg.value()
                 json_value = json.loads(record_value)
-                print(json_value)
 
                 user_code = json_value['user_code']
                 time_series = json_value['time_series']
@@ -27,13 +26,38 @@ def consumer_fun(consumer, producer, my_position):
                 converter_alg = json_value['converter_alg']
                 comparator_alg = json_value['comparator_alg']
                 len_time_series = json_value['len_time_series']
+                position = json_value["position"]
 
                 validade_time_series = TimeSeriesSchema().load(
 		            {'user_code': user_code, 'time_series': time_series, 'work_order': work_order, 
-                    'converter_alg': converter_alg, 'comparator_alg': comparator_alg, 'len_time_series': len_time_series})
+                    'converter_alg': converter_alg, 'comparator_alg': comparator_alg, 'len_time_series': len_time_series,
+                    'position': position})
                 
-                consume_series = Thread(target=exec_work, args=(validade_time_series, producer, my_position))
-                consume_series.start()
+                if(user_code in clients_hashmap):
+                    clients_hashmap[user_code][position] = time_series
+                    print(len(clients_hashmap[user_code]))
+                    if(len(clients_hashmap[user_code]) == 20):
+                        vector_final = []
+                        for i in range(1, 21):
+                            vector_final.extend(clients_hashmap[user_code][i])
+                        
+                        validade_time_series = TimeSeriesSchema().load(
+		                    {'user_code': user_code, 'time_series': vector_final, 'work_order': work_order, 
+                            'converter_alg': converter_alg, 'comparator_alg': comparator_alg,
+                            'len_time_series': len_time_series, 'position': position})
+
+                        #print('é o validas')
+                        #print(len(vector_final))
+                        consume_series = Thread(target=exec_work, args=(validade_time_series, producer, my_position))
+                        consume_series.start()
+                else:
+                    if(len(time_series) == len_time_series):
+                        print('chegay')
+                        consume_series = Thread(target=exec_work, args=(validade_time_series, producer, my_position))
+                        consume_series.start()
+                    else:
+                        clients_hashmap[user_code] = {}
+                        clients_hashmap[user_code][position] = time_series
 
     except KeyboardInterrupt:
         print("Detected Keyboard Interrupt. Cancelling.")
@@ -73,10 +97,26 @@ def exec_work(data, producer, my_position):
     for n in thread_list:
         n.join()
 
-    json_obj = { 'user_code': user_code, 'results': aux_results, 
-        'worker_order': data_work_order, 'comparator_alg': comparator_alg, 'len_time_series': len_time_series}
+    aux_hash = {}
+    count = 0
 
-    prod(producer, 'send_receive_networks', 0, json_obj, user_code)
+    for n in data_work_order[my_position-1]:
+        if(count == 19):
+            json_obj = { 'user_code': user_code, 'results': aux_hash, 
+            'worker_order': data_work_order, 'comparator_alg': comparator_alg, 'len_time_series': len_time_series}
+
+            prod(producer, 'send_receive_networks', 0, json_obj, user_code)
+            aux_hash = {}
+
+        aux_hash[int(n-1)] = aux_results[int(n-1)]
+        count+=1
+
+    if(len(aux_hash) >= 1):
+        json_obj = { 'user_code': user_code, 'results': aux_hash, 
+            'worker_order': data_work_order, 'comparator_alg': comparator_alg, 'len_time_series': len_time_series}
+
+        prod(producer, 'send_receive_networks', 0, json_obj, user_code)
+
     producer.flush()
 
 def calc_alg(x, alg, count, list):
@@ -84,6 +124,3 @@ def calc_alg(x, alg, count, list):
     to_send_receive_networks = send_receive_network_Schema().load({
                 "network": r})
     list[count] = to_send_receive_networks
-    print('CLAUCLO')
-    print(count)
-    print(list)
