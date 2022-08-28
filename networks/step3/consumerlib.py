@@ -74,7 +74,7 @@ def exec_work(data, networks_hashmap, producer, my_position):
             for m in range(int(n), len_series):
                 thread_list.append(Thread(target=calc_alg, args=(networks_hashmap[str(int(n)-1)]['network'],  
                     networks_hashmap[str(m)]['network'], n, m, alg, aux_results)))
-                thread_list[count].start()
+                #thread_list[count].start()
                 count+=1
     else:
         for n in data_work_order[my_position-1]:
@@ -83,14 +83,41 @@ def exec_work(data, networks_hashmap, producer, my_position):
                     networks_hashmap[str(m)]['network'], n, m, alg, aux_results)
                 count+=1
 
-
-    for n in thread_list:
-        n.join()
-
-    json_obj = { 'user_code': user_code, 'results': aux_results}
-
+    json_obj = { 'user_code': user_code, 'message': 'start comparations'}
     prod(producer, 'monitor', 0, json_obj, user_code)
+
+    last = 0
+    for n in range(len(thread_list)):
+        thread_list[n].start()
+
+        if(n % 6 == 0):
+            for n in range(last, n):
+                thread_list[n].join()
+            last = n
+            #json_obj = { 'user_code': user_code, 'message': n}
+            #prod(producer, 'monitor', 0, json_obj, user_code)
+
+        if(n % 10000 == 0):
+            json_obj = { 'user_code': user_code, 'message': n}
+            prod(producer, 'monitor', 0, json_obj, user_code)
+
+    for n in range(last, len(thread_list)):
+        thread_list[n].join()
+
+    splits = np.array_split(aux_results, 80)
+    print("From splits \n\n\n\n")
+    #print(splits)
+    count=0
+    for x in splits:
+        #print('e o count')
+        #print(count)
+        json_array = x.tolist()
+        json_obj = { 'user_code': user_code, 'results': json_array}
+        prod(producer, 'monitor', 0, json_obj, user_code)
+        count+=1
+        
     producer.flush()
+    
 
 def calc_alg(x, y, n, m, alg, list):
     r = alg(x, y)

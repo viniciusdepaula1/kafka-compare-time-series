@@ -36,9 +36,9 @@ def consumer_fun(consumer, producer, my_position, clients_hashmap):
                 if(user_code in clients_hashmap):
                     clients_hashmap[user_code][position] = time_series
                     print(len(clients_hashmap[user_code]))
-                    if(len(clients_hashmap[user_code]) == 20):
+                    if(len(clients_hashmap[user_code]) == 80):
                         vector_final = []
-                        for i in range(1, 21):
+                        for i in range(1, 81):
                             vector_final.extend(clients_hashmap[user_code][i])
                         
                         validade_time_series = TimeSeriesSchema().load(
@@ -94,28 +94,24 @@ def exec_work(data, producer, my_position):
         thread_list[count].start()
         count+=1
 
-    for n in thread_list:
-        n.join()
+        if(count >= 6):
+            for n in thread_list:
+                n.join()
+            count = 0
+            thread_list.clear()
+                
+    #for n in thread_list:
+    #    n.join()
 
     aux_hash = {}
-    count = 0
 
     for n in data_work_order[my_position-1]:
-        if(count == 19):
+            aux_hash[int(n-1)] = aux_results[int(n-1)]
             json_obj = { 'user_code': user_code, 'results': aux_hash, 
             'worker_order': data_work_order, 'comparator_alg': comparator_alg, 'len_time_series': len_time_series}
-
+           
             prod(producer, 'send_receive_networks', 0, json_obj, user_code)
             aux_hash = {}
-
-        aux_hash[int(n-1)] = aux_results[int(n-1)]
-        count+=1
-
-    if(len(aux_hash) >= 1):
-        json_obj = { 'user_code': user_code, 'results': aux_hash, 
-            'worker_order': data_work_order, 'comparator_alg': comparator_alg, 'len_time_series': len_time_series}
-
-        prod(producer, 'send_receive_networks', 0, json_obj, user_code)
 
     producer.flush()
 

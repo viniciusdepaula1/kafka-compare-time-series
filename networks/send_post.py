@@ -5,6 +5,9 @@ import uuid
 import numpy as np
 import os
 import sklearn.preprocessing
+from datetime import datetime
+import time
+import csv
 
 def read(path):
 		"""
@@ -59,14 +62,16 @@ for x in range(len(series[0])):
 
 user_code = str(uuid.uuid1())
 xd = []
-for x in range(40):
+for x in range(1000):
     xd.append(series[0][x])
+
+array_aux = np.zeros((1000,1000))
 
 url = 'http://127.0.0.1:5000'
 sio = socketio.Client()
 sio.connect(url)
 
-splits = np.array_split(xd, 20)
+splits = np.array_split(xd, 80)
 print("From splits \n\n\n\n")
 #print(splits)
 position = 1
@@ -82,6 +87,12 @@ for x in splits:
     }
     position +=1
     sio.emit('message', test0)
+
+# ts stores the time in seconds
+ts = time.time()
+  
+# print the current timestamp
+print(ts)
 
 test1 = {
     'user_code': user_code, 
@@ -124,6 +135,13 @@ def response(data):
 @sio.on('message')
 def message(data):
     print(data)
+    for x in data['results']:
+        array_aux[x['line']][x['column']] = x['value']
+
+@sio.on('monitor')
+def monitor(data):
+    print('from monitor')
+    print(data)
 
 @sio.on('connect')
 def connect():
@@ -131,9 +149,29 @@ def connect():
 
 @sio.on('disconnect')
 def test_disconnect():
+    # ts stores the time in seconds
+    ts2 = time.time()
+    ts3 = ts2 - ts
+  
+    # print the current timestamp
+    print(ts2)
+
     print('Client disconnected')
     sio.disconnect()
 
+    np.savetxt('matrix_1000.csv', array_aux, delimiter=',')
+    header_csv = ['init, finish, time_total']
+    data_csv=[ts, ts2, ts3]
+
+
+    with open('matrix_1000_info.csv', 'w', encoding='UTF8') as f:
+        writer = csv.writer(f)
+
+        # write the header
+        writer.writerow(header_csv)
+
+        # write the data
+        writer.writerow(data_csv)
 #sio.emit('message', test0)
 #sio.wait()
 

@@ -13,7 +13,7 @@ def acked(err, msg):
 def prod(producer, topic, partition, value, user_code):
     record_key = user_code
     record_value = json.dumps(value)
-    print("Producing record: {}\t{}".format(record_key, record_value))
+    #print("Producing record: {}\t{}".format(record_key, record_value))
     producer.produce(topic, key=record_key, value=record_value,
                      on_delivery=acked, partition=partition)
     producer.poll(0)

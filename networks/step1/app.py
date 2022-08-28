@@ -43,7 +43,7 @@ limiter_connection = {}
 user_event = Event()
 q = Queue()
 
-monitor_thread = Thread(target=consumer_fun, args=(consumer, user_event, q))
+monitor_thread = Thread(target=consumer_fun, args=(consumer, user_event, q, clients_hashmap, socketio))
 user_thread = Thread(target=user_wait_result, args=(q, user_event, clients_hashmap, limiter_connection, number_of_workers, socketio))
 
 user_thread.start()

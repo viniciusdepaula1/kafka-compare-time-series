@@ -57,7 +57,7 @@ def balanceamento(num_series, num_maquinas):
 
     return maqs
 
-def consumer_fun(consumer, user_event, queue):
+def consumer_fun(consumer, user_event, queue, clients_hashmap, flask_socketio):
     print('listening')
     try:
         while True:
@@ -69,17 +69,17 @@ def consumer_fun(consumer, user_event, queue):
             else:
                 record_value = msg.value()
                 json_value = json.loads(record_value)
-                #user_code = json_value['user_code']
-                #results = json_value['results']
 
-                #print(results)
-                #print(user_code)
-
-                queue.put(json_value)
-
-                print('lancei')
-                
-                user_event.set()
+                if('message' in json_value): 
+                    print('entrei')
+                    user_code = json_value['user_code']
+                    message = json_value['message']
+                    if(user_code in clients_hashmap):
+                        flask_socketio.emit('monitor', 
+                            {'status': 'comparing', 'message': message}, room=clients_hashmap[user_code])
+                else:
+                    queue.put(json_value)
+                    user_event.set()
 
     except KeyboardInterrupt:
         print("Detected Keyboard Interrupt. Cancelling.")
@@ -110,9 +110,11 @@ def user_wait_result(queue, user_event, clients_hashmap, limiter_connection, num
                         room=clients_hashmap[user_code])
 
                     limiter_connection[user_code] += 1
-                    if(limiter_connection[user_code] >= 20):
+                    if(limiter_connection[user_code] >= 160):
                         print('closing connection')
                         flask_socketio.emit('disconnect', room=clients_hashmap[user_code])
+                        del clients_hashmap[user_code]
+                        del limiter_connection[user_code]
                 else:
                     print('user not in database')
             
