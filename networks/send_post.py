@@ -62,10 +62,10 @@ for x in range(len(series[0])):
 
 user_code = str(uuid.uuid1())
 xd = []
-for x in range(1000):
+for x in range(500):
     xd.append(series[0][x])
 
-array_aux = np.zeros((1000,1000))
+array_aux = np.zeros((500,500))
 
 url = 'http://127.0.0.1:5000'
 sio = socketio.Client()
@@ -80,7 +80,7 @@ for x in splits:
     test0 = {
         'user_code': user_code, 
         'time_series': x.tolist(),
-        'converter_alg': 3,
+        'converter_alg': 1,
         'comparator_alg': 3,
         'len_time_series': len(xd),
         'position': position
@@ -159,12 +159,12 @@ def test_disconnect():
     print('Client disconnected')
     sio.disconnect()
 
-    np.savetxt('matrix_1000.csv', array_aux, delimiter=',')
+    np.savetxt('network_conv1_comp1_array.csv', array_aux, delimiter=',')
     header_csv = ['init, finish, time_total']
     data_csv=[ts, ts2, ts3]
 
 
-    with open('matrix_1000_info.csv', 'w', encoding='UTF8') as f:
+    with open('network_alg1_alg1_array_info.csv', 'w', encoding='UTF8') as f:
         writer = csv.writer(f)
 
         # write the header

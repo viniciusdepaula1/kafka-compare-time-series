@@ -7,6 +7,8 @@ from model import TimeSeries, TimeSeriesSchema, send_receive_network_Schema
 from threading import Thread
 from producerlib import *
 from marshmallow import exceptions
+import csv 
+import time
 
 def consumer_fun(consumer, producer, my_position, clients_hashmap):
     try:
@@ -76,7 +78,8 @@ def select_alg(alg_number):
 
 def exec_work(data, producer, my_position):
     print('From work')
-    
+    ts = time.time()
+
     alg = select_alg(data.get('converter_alg'))
     comparator_alg = data.get('comparator_alg')
     len_time_series = data.get('len_time_series')
@@ -112,6 +115,20 @@ def exec_work(data, producer, my_position):
            
             prod(producer, 'send_receive_networks', 0, json_obj, user_code)
             aux_hash = {}
+
+    ts2 = time.time()
+    ts3 = ts2 - ts
+    header_csv = ['init, finish, time_total']
+    data_csv=[ts, ts2, ts3]
+    
+    with open('network_step2_2workers_alg1.csv', 'w', encoding='UTF8') as f:
+        writer = csv.writer(f)
+
+        # write the header
+        writer.writerow(header_csv)
+
+        # write the data
+        writer.writerow(data_csv)
 
     producer.flush()
 

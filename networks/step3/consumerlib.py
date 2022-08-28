@@ -8,6 +8,8 @@ from model import monitorSchema
 from threading import Thread
 from producerlib import *
 from marshmallow import exceptions
+import time 
+import csv
 
 def consumer_fun(consumer, producer, networks_hashmap, my_position, clients_hashmap):
     try:
@@ -58,6 +60,7 @@ def select_alg(alg_number):
 
 def exec_work(data, networks_hashmap, producer, my_position):
     print('From work')
+    ts = time.time()
 
     alg = select_alg(data.get('comparator_alg'))
     len_series = len(networks_hashmap)
@@ -115,6 +118,20 @@ def exec_work(data, networks_hashmap, producer, my_position):
         json_obj = { 'user_code': user_code, 'results': json_array}
         prod(producer, 'monitor', 0, json_obj, user_code)
         count+=1
+
+    ts2 = time.time()
+    ts3 = ts2 - ts
+    header_csv = ['init, finish, time_total']
+    data_csv=[ts, ts2, ts3]
+    
+    with open('network_step2_2workers_alg1.csv', 'w', encoding='UTF8') as f:
+        writer = csv.writer(f)
+
+        # write the header
+        writer.writerow(header_csv)
+
+        # write the data
+        writer.writerow(data_csv)
         
     producer.flush()
     
