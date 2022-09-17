@@ -2,7 +2,6 @@ from ast import arg
 from queue import Queue, Empty
 from socket import socket
 from threading import Thread, Event
-from turtle import position
 from flask import Flask, jsonify, request
 from confluent_kafka import Producer, Consumer
 from numpy import matrix

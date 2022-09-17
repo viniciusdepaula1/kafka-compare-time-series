@@ -1,4 +1,3 @@
-from turtle import Turtle
 from typing import List
 from marshmallow import Schema, fields
 

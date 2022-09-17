@@ -22,7 +22,7 @@
 # =============================================================================
 
 import argparse, sys
-from confluent_kafka import avro, KafkaError
+from confluent_kafka import KafkaError
 from confluent_kafka.admin import AdminClient, NewTopic
 from uuid import uuid4
 
