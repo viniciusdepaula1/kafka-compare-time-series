@@ -1,0 +1,15 @@
+confluent_kafka==1.8.2
+Flask==2.1.2
+Flask_SocketIO==5.2.0
+gevent_socketio==0.3.6
+httplib2==0.14.0
+marshmallow==3.17.0
+matplotlib==3.5.1
+NetLSD==1.0.2
+networkx==2.6.3
+numpy==1.22.1
+python_igraph==0.10.1
+requests==2.22.0
+scikit_learn==1.1.2
+scipy==1.7.3
+ts2vg==1.0.0

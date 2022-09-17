@@ -1,0 +1,6 @@
+confluent_kafka==1.8.2
+Flask==2.1.2
+Flask_SocketIO==5.2.0
+gevent_socketio==0.3.6
+marshmallow==3.17.0
+numpy==1.22.1
